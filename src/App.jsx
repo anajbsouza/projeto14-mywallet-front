@@ -4,7 +4,7 @@ import HomePage from "./pages/HomePage"
 import SignInPage from "./pages/SignInPage"
 import SignUpPage from "./pages/SignUpPage"
 import TransactionsPage from "./pages/TransactionPage"
-import UserContext from "./contexts/UserContext"
+import UserContext from "./contexts/AuthContext"
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"))

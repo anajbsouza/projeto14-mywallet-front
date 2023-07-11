@@ -1,8 +1,7 @@
-import useQuickOut from "../../hooks/useQuickOut"
+import useQuickOut from "../hooks/useQuickOut"
 import { useParams } from "react-router-dom"
-import useForm from "../../hooks/useForm"
-import { useAddTransaction } from "../../services/transactions"
-import { TransactionsContainer } from "./styled"
+import useForm from "../hooks/useForms"
+import { useAddTransaction } from "../services/transactions"
 
 export default function AddTransactionsPage() {
   const { form, handleForm } = useForm({ description: "", value: "" })

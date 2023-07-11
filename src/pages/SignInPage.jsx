@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom"
-import MyWalletLogo from "../../components/MyWalletLogo/MyWalletLogo"
-import useQuickIn from "../../hooks/useQuickIn"
-import useForm from "../../hooks/useForm"
-import { useLogin } from "../../services/auth"
-import { LoginContainer } from "./styled"
+import MyWalletLogo from "../components/MyWalletLogo"
+import useQuickIn from "../hooks/useQuickIn"
+import useForm from "../hooks/useForms"
+import { useLogin } from "../services/auth"
 
 export default function LoginPage() {
   const { form, handleForm } = useForm({ email: "", password: "" })
