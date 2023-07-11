@@ -1,67 +1,42 @@
-import axios from "axios";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom"
-import styled from "styled-components"
+import useQuickOut from "../../hooks/useQuickOut"
+import { useParams } from "react-router-dom"
+import useForm from "../../hooks/useForm"
+import { useAddTransaction } from "../../services/transactions"
+import { TransactionsContainer } from "./styled"
 
-export default function TransactionsPage() {
-  const { tipo } = useParams();
-  const form = {value:"", type:"", title:""}
-  const valueRef = useRef("");
-  const titleRef = useRef("");
-  const token = localStorage.getItem("token");
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false)
+export default function AddTransactionsPage() {
+  const { form, handleForm } = useForm({ description: "", value: "" })
+  const { type } = useParams()
+  const typeText = type === "entrada" ? "Entrada" : "Saída"
+  const addTransaction = useAddTransaction()
+  useQuickOut()
 
-
-  useEffect(()=>{
-  if (!token) return navigate("/");
-  },[navigate,token])
-
-  const buttonClick = () =>{
-    form.value = valueRef.current.value.toString();
-    form.title = titleRef.current.value;
-    form.type = tipo==="saída"?"saida":tipo;
+  function submitForm(e) {
+    e.preventDefault()
+    const body = { ...form, type: type === "entrada" ? "income" : "expense" }
+    addTransaction(body)
   }
-  const request = () => {
-    setLoading(true)
-    const url = "https://digitalwallet-api.onrender.com/transacao";
-    const config = {headers: {Authorization: `Bearer ${token}`}}
 
-    axios.post(url, form, config)
-      .then(()=>{
-        console.log("transação feita");
-        setLoading(false)
-        navigate("/home")
-      })
-      .catch((err)=>{
-        console.log(err)
-        setLoading(false)
-        alert("Erro ao fazer transação, tente novamente!")
-      })
-  }
-  const transaction = (e) =>{
-    e.preventDefault();
-    buttonClick();
-    if(form.value===""||form.title==="")return alert("Todos os campos devem ser preenchidos")
-    
-    request();
-  }
-  if(loading){
-    return(
-      <TransactionsContainer>
-        <div className="center">
-          <span className="loader"></span>
-        </div>
-      </TransactionsContainer>
-    )
-  }
   return (
     <TransactionsContainer>
-      <h1>Nova {tipo}</h1>
-      <form onSubmit={transaction}>
-        <input placeholder="Valor" type="number" min={"0.01"} step={"0.01"} ref={valueRef}/>
-        <input placeholder="Descrição" type="text" ref={titleRef}/>
-        <button type="submit">Salvar {tipo}</button>
+      <h1>Nova {typeText}</h1>
+      <form onSubmit={submitForm}>
+        <input
+          required
+          type="number"
+          placeholder="Valor"
+          name="value"
+          value={form.value}
+          onChange={handleForm}
+        />
+        <input
+          required
+          placeholder="Descrição"
+          name="description"
+          value={form.description}
+          onChange={handleForm}
+        />
+        <button type="submit">Salvar {typeText}</button>
       </form>
     </TransactionsContainer>
   )

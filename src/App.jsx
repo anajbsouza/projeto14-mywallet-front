@@ -7,10 +7,13 @@ import TransactionsPage from "./pages/TransactionPage"
 import UserContext from "./contexts/UserContext"
 
 export default function App() {
+  const [token, setToken] = useState(localStorage.getItem("token"))
+  const [userName, setUserName] = useState(localStorage.getItem("userName"))
+
   return (
     <PagesContainer>
       <BrowserRouter>
-        <UserContext.Provider value={{}}>
+        <UserContext.Provider value={{ token, setToken, userName, setUserName }}>
           <Routes>
             <Route path="/" element={<SignInPage />} />
             <Route path="/cadastro" element={<SignUpPage />} />

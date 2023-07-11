@@ -1,88 +1,60 @@
-import styled from "styled-components"
 import { BiExit } from "react-icons/bi"
 import { AiOutlineMinusCircle, AiOutlinePlusCircle } from "react-icons/ai"
-import { useEffect, useState } from "react"
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import useQuickOut from "../../hooks/useQuickOut"
+import { useContext } from "react"
+import AuthContext from "../../contexts/AuthContext"
+import { useLogout } from "../../services/auth"
+import TransactionItem from "../../components/TransactionItem/TransactionItem"
+import { Oval } from "react-loader-spinner"
+import { useGetTransactions } from "../../services/transactions"
+import { useNavigate } from "react-router-dom"
+import { HomeContainer, Header, TransactionsContainer, ListContainer, Value, ButtonsContainer } from "./styled"
+import { mainColor, mainColorLight } from "../../constants/colors"
 
 export default function HomePage() {
-  const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const token = localStorage.getItem("token");
-  const [loading, setLoading] = useState(false);
-  
-  useEffect(()=>{
-    setLoading(true)
-    if (!token) return navigate("/");
-    const url = "https://my-wallet-api-5kfy.onrender.com";
-    const config = { headers: { Authorization: `Bearer ${token}` } }
-    axios.get(url, config)
-      .then((res) => {
-        setLoading(false)
-        setData(res.data)
-      })
-      .catch((err) => {
-        console.log(err)
-        setLoading(false)
-        alert("Erro ao carregar dados, faça login novamente!")
-        navigate("/")
-      })
-  },[token, navigate])
+  const { userName } = useContext(AuthContext)
+  const navigate = useNavigate()
+  const logout = useLogout()
+  const { transactions, getTransactions } = useGetTransactions()
+  useQuickOut()
 
-  const logout = () =>{
-    localStorage.setItem("token","")
-    navigate("/")
+  function calcBalance() {
+    const sum = transactions.reduce((acc, cur) => cur.type === "income" ? acc + cur.value : acc - cur.value, 0)
+    return sum.toFixed(2)
   }
-  if(loading){
-    return(
-      <HomeContainer>
-        <TransactionsContainer>
-          <ul className="ul-empty">
-            <span className="loader"></span>
-          </ul>
-        </TransactionsContainer>
-      </HomeContainer>
-    )
-  }
+
+  const balance = transactions && calcBalance()
 
   return (
     <HomeContainer>
       <Header>
-        <h1>Olá, {data===null?"Fulano":data.name}</h1>
-        <BiExit onClick={logout}/>
+        <h1>Olá, {userName}</h1>
+        <BiExit onClick={logout} />
       </Header>
 
-      {data===null?"":
       <TransactionsContainer>
-        <ul className={data.transactions.length === 0?"ul-empty":""}>
-          {data.transactions.length === 0?
-            <p>Não há registros de entrada ou saída</p>:
-            data.transactions.map((t, i)=>(
-                <ListItemContainer key={i}>
-                  <div>
-                    <span>{t.date}</span>
-                    <strong>{t.title}</strong>
-                  </div>
-                  <Value color={t.type==="saida"?"negativo":"positivo"}>{t.value}</Value>
-                </ListItemContainer>
-            ))}
-
-        </ul>
-
-        <article>
-          <strong>Saldo</strong>
-          <Value color={"positivo"}>{data.totalBalance.toFixed(2).replace(".",",")}</Value>
-        </article>
-      </TransactionsContainer>}
+        {!transactions && <Oval color={mainColor} secondaryColor={mainColorLight} />}
+        {transactions && transactions.length === 0 && <>Não há registros de entrada ou saída</>}
+        {transactions && transactions.length > 0 && (
+          <ListContainer>
+            <ul>
+              {transactions.map((t) => <TransactionItem key={t._id} transaction={t} getTransactions={getTransactions} />)}
+            </ul>
+            <article>
+              <strong>Saldo</strong>
+              <Value color={balance > 0 ? "positivo" : "negativo"}>{balance.toString().replace(".", ",")}</Value>
+            </article>
+          </ListContainer>
+        )}
+      </TransactionsContainer>
 
 
       <ButtonsContainer>
-        <button onClick={()=>navigate("/nova-transacao/entrada")}>
+        <button onClick={() => navigate("/nova-transacao/entrada")}>
           <AiOutlinePlusCircle />
           <p>Nova <br /> entrada</p>
         </button>
-
-        <button onClick={()=>navigate("/nova-transacao/saída")}>
+        <button onClick={() => navigate("/nova-transacao/saida")}>
           <AiOutlineMinusCircle />
           <p>Nova <br />saída</p>
         </button>
@@ -96,13 +68,6 @@ const HomeContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: calc(100vh - 50px);
-  .loader{
-    left: -14px;
-  }
-.loader::after {
-  background: #8c11be;
-  }
-  
 `
 const Header = styled.header`
   display: flex;
@@ -128,17 +93,6 @@ const TransactionsContainer = styled.article`
     strong {
       font-weight: 700;
       text-transform: uppercase;
-    }
-  }
-  .ul-empty{
-    width: 100%;
-    height: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    p{
-      width: 180px;
-      text-align: center;
     }
   }
 `
