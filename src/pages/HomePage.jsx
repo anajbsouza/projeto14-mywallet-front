@@ -1,47 +1,88 @@
 import styled from "styled-components"
 import { BiExit } from "react-icons/bi"
 import { AiOutlineMinusCircle, AiOutlinePlusCircle } from "react-icons/ai"
+import { useEffect, useState } from "react"
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(()=>{
+    setLoading(true)
+    if (!token) return navigate("/");
+    const url = "https://my-wallet-api-5kfy.onrender.com";
+    const config = { headers: { Authorization: `Bearer ${token}` } }
+    axios.get(url, config)
+      .then((res) => {
+        setLoading(false)
+        setData(res.data)
+      })
+      .catch((err) => {
+        console.log(err)
+        setLoading(false)
+        alert("Erro ao carregar dados, faça login novamente!")
+        navigate("/")
+      })
+  },[token, navigate])
+
+  const logout = () =>{
+    localStorage.setItem("token","")
+    navigate("/")
+  }
+  if(loading){
+    return(
+      <HomeContainer>
+        <TransactionsContainer>
+          <ul className="ul-empty">
+            <span className="loader"></span>
+          </ul>
+        </TransactionsContainer>
+      </HomeContainer>
+    )
+  }
+
   return (
     <HomeContainer>
       <Header>
-        <h1>Olá, Fulano</h1>
-        <BiExit />
+        <h1>Olá, {data===null?"Fulano":data.name}</h1>
+        <BiExit onClick={logout}/>
       </Header>
 
+      {data===null?"":
       <TransactionsContainer>
-        <ul>
-          <ListItemContainer>
-            <div>
-              <span>30/11</span>
-              <strong>Almoço mãe</strong>
-            </div>
-            <Value color={"negativo"}>120,00</Value>
-          </ListItemContainer>
+        <ul className={data.transactions.length === 0?"ul-empty":""}>
+          {data.transactions.length === 0?
+            <p>Não há registros de entrada ou saída</p>:
+            data.transactions.map((t, i)=>(
+                <ListItemContainer key={i}>
+                  <div>
+                    <span>{t.date}</span>
+                    <strong>{t.title}</strong>
+                  </div>
+                  <Value color={t.type==="saida"?"negativo":"positivo"}>{t.value}</Value>
+                </ListItemContainer>
+            ))}
 
-          <ListItemContainer>
-            <div>
-              <span>15/11</span>
-              <strong>Salário</strong>
-            </div>
-            <Value color={"positivo"}>3000,00</Value>
-          </ListItemContainer>
         </ul>
 
         <article>
           <strong>Saldo</strong>
-          <Value color={"positivo"}>2880,00</Value>
+          <Value color={"positivo"}>{data.totalBalance.toFixed(2).replace(".",",")}</Value>
         </article>
-      </TransactionsContainer>
+      </TransactionsContainer>}
 
 
       <ButtonsContainer>
-        <button>
+        <button onClick={()=>navigate("/nova-transacao/entrada")}>
           <AiOutlinePlusCircle />
           <p>Nova <br /> entrada</p>
         </button>
-        <button>
+
+        <button onClick={()=>navigate("/nova-transacao/saída")}>
           <AiOutlineMinusCircle />
           <p>Nova <br />saída</p>
         </button>
@@ -55,6 +96,13 @@ const HomeContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: calc(100vh - 50px);
+  .loader{
+    left: -14px;
+  }
+.loader::after {
+  background: #8c11be;
+  }
+  
 `
 const Header = styled.header`
   display: flex;
@@ -80,6 +128,17 @@ const TransactionsContainer = styled.article`
     strong {
       font-weight: 700;
       text-transform: uppercase;
+    }
+  }
+  .ul-empty{
+    width: 100%;
+    height: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    p{
+      width: 180px;
+      text-align: center;
     }
   }
 `
